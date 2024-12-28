@@ -20,7 +20,7 @@ let buttons: [[String]] = [
 
 struct ContentView: View {
     
-    @State var displayText: String = "["
+    @State var displayText: String = "5+10/2+(5²-9)*0.5"
 
     var body: some View {
         VStack {
@@ -49,27 +49,31 @@ struct ContentView: View {
     
     // Using _ allows passing in param without name
     func buttonUsed(_ button: String) {
-        switch button {
-        case "0","1","2","3","4","5","6","7","8","9":
+        // Check if number
+        if let _ = Int(button) {
             displayText.append(button)
-        default:
+        }
+        else {
+            // Check if same character
             if String(displayText.last ?? " ") == button {
-                break
+                return
             }
-            
+            // Specific Buttons
             switch button {
             case "C":
                 displayText = ""
             case "⌫":
                 displayText.removeLast()
             case "√x":
-                print("mal")
+                displayText.append("√")
             case "x²":
-                print("mal")
+                if let _ = Int(String(displayText.last ?? " ")) {
+                    displayText.append("²")
+                }
             case "+/-":
                 print("ka")
             case "=":
-                print("ka")
+                calculate()
             case "+", "-", "*", "/":
                 switch displayText.last {
                 case "+", "-", "*", "/":
@@ -80,6 +84,25 @@ struct ContentView: View {
                 displayText.append(button)
             default:
                 displayText.append(button)
+            }
+        }
+        
+        func calculate() {
+            guard !displayText.isEmpty else { return }
+            
+            if displayText.contains("²") {
+                //displayText.split(separator: "²").forEach { displayText.append($0) }
+            }
+            
+            let expression = NSExpression(format: displayText)
+            if let result = expression.expressionValue(with: nil, context: nil) as? Double {
+                displayText = String(result)
+                if displayText.hasSuffix(".0") {
+                    displayText.removeLast(2)
+                }
+            }
+            else {
+                
             }
         }
         

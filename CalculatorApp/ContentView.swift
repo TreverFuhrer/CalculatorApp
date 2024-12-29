@@ -18,35 +18,69 @@ let buttons: [[String]] = [
 
 struct ContentView: View {
     
-    @State var displayText: String = "5+-10/2+(5²-9)*0.5"
-    @State var calculation: String = "5+-10/2+5**2-9*0.5"
-    @State var equation: String = ""
+    @State var displayText: String = ""
+    @State var calculation: String = ""
+    @State var equation: String = "Ans = 0"
+    
     @State var usingParenthesis: String = ""
-    @State var startingChar: String = ""
+    @State var startingChar: String = "0"
     
     var body: some View {
-        VStack {
-            Text(equation)
-            Text(startingChar + displayText + usingParenthesis)
-            ForEach(buttons, id: \.self) { row in
-                HStack {
-                    ForEach(row, id: \.self) { button in
-                        Button(action: {
-                            buttonUsed(button)
-                        }) {
-                            Text(button)
-                                .font(.title)
-                                .frame(width: 90, height: 70)
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(10)
+        ZStack {
+            Color(UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0)).ignoresSafeArea()
+            VStack {
+                Spacer()
+                Text(equation)
+                    .font(.system(size: 24, weight: .bold))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 16)
+                    .lineLimit(1)
+                
+                Text(startingChar + displayText + usingParenthesis)
+                    .font(.system(size: 48, weight: .bold))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                
+                
+                ForEach(buttons, id: \.self) { row in
+                    HStack {
+                        ForEach(row, id: \.self) { button in
+                            Button(action: {
+                                buttonUsed(button)
+                            }) {
+                                Text(button)
+                                    .font(.title)
+                                    .frame(width: 85, height: 70)
+                                    .background(buttonBackgroundColor(for: button))
+                                    .foregroundStyle(Color.white)
+                                    .cornerRadius(10)
+                            }
                         }
                     }
                 }
                 
             }
-            
+            .padding(.bottom, 16)
         }
-        .padding()
+    }
+    
+    func buttonBackgroundColor(for button: String) -> Color {
+        switch button {
+        case "0","1","2","3","4","5","6","7","8","9":
+            return Color(UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0))
+        case "C":
+            return Color.red.opacity(0.45)
+        case "⌫":
+            return Color.orange.opacity(0.45)
+        case "=":
+            return Color.green.opacity(0.45)
+        default:
+            return Color.gray.opacity(0.2)
+        }
     }
     
     // Using _ allows passing in param without name
@@ -138,9 +172,6 @@ struct ContentView: View {
                     doubleAppend("-")
                 default: break
                 }
-                //var temp = calculation
-                //for
-                print("ma")
             case "=":
                 calculate()
             default:

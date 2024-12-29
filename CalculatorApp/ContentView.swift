@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-var equation: String = "5"
-
 let buttons: [[String]] = [
         ["x²", "√x", "C", "⌫"],
         ["%", "(", ")", "/"],
@@ -20,12 +18,16 @@ let buttons: [[String]] = [
 
 struct ContentView: View {
     
-    @State var displayText: String = "5+10/2+(5²-9)*0.5"
-
+    @State var displayText: String = "5+-10/2+(5²-9)*0.5"
+    @State var calculation: String = "5+-10/2+5**2-9*0.5"
+    @State var equation: String = ""
+    @State var usingParenthesis: String = ""
+    @State var startingChar: String = ""
+    
     var body: some View {
         VStack {
-            //Text(equation)
-            Text(displayText)
+            Text(equation)
+            Text(startingChar + displayText + usingParenthesis)
             ForEach(buttons, id: \.self) { row in
                 HStack {
                     ForEach(row, id: \.self) { button in
@@ -51,59 +53,150 @@ struct ContentView: View {
     func buttonUsed(_ button: String) {
         // Check if number
         if let _ = Int(button) {
-            displayText.append(button)
+            doubleAppend(button)
+            updateStartingChar()
         }
         else {
             // Check if same character
-            if String(displayText.last ?? " ") == button {
+            if displayText.suffix(1) == button {
                 return
             }
             // Specific Buttons
             switch button {
-            case "C":
-                displayText = ""
-            case "⌫":
-                displayText.removeLast()
-            case "√x":
-                displayText.append("√")
-            case "x²":
-                if let _ = Int(String(displayText.last ?? " ")) {
-                    displayText.append("²")
-                }
-            case "+/-":
-                print("ka")
-            case "=":
-                calculate()
             case "+", "-", "*", "/":
-                switch displayText.last {
+                switch displayText.suffix(1) {
                 case "+", "-", "*", "/":
                     displayText.removeLast()
-                default:
+                    calculation.removeLast()
+                    doubleAppend(button)
+                case "√", "(", ".":
                     break
+                default:
+                    if !displayText.isEmpty {
+                        doubleAppend(button)
+                    }
                 }
-                displayText.append(button)
+            case "C":
+                displayText = ""
+                calculation = ""
+                usingParenthesis = ""
+                updateStartingChar()
+            case "⌫":
+                if !calculation.isEmpty {
+                    if displayText.last == ")" {
+                        usingParenthesis = "〉"
+                    }
+                    if displayText.last == "(" {
+                        usingParenthesis = ""
+                    }
+                    displayText.removeLast()
+                    calculation.removeLast()
+                    updateStartingChar()
+                }
+            case "(":
+                switch calculation.suffix(1) {
+                case "/", "*", "+", "-", "":
+                    usingParenthesis = "〉"
+                    doubleAppend(button)
+                    updateStartingChar()
+                default: break
+                }
+            case ")":
+                if usingParenthesis == "〉" && displayText.last != "(" {
+                    usingParenthesis = ""
+                    doubleAppend(button)
+                }
+            case "√x":
+                switch calculation.suffix(1) {
+                case "/", "*", "+", "-", "":
+                    displayText.append("√")
+                    calculation.append("0.5**")
+                    updateStartingChar()
+                default: break
+                }
+            case "%":
+                if let _ = Int(displayText.suffix(1)) {
+                    displayText.append("%")
+                    calculation.append("*0.01")
+                }
+            case ".":
+                if startingChar == "0" {
+                    doubleAppend("0.")
+                }
+                else if let _ = Int(displayText.suffix(1)) {
+                    doubleAppend(".")
+                }
+                updateStartingChar()
+            case "x²":
+                if let _ = Int(displayText.suffix(1)) {
+                    displayText.append("²")
+                    calculation.append("**2")
+                }
+            case "+/-":
+                switch calculation.suffix(1) {
+                case "/", "*", "+", "-", "√":
+                    doubleAppend("-")
+                default: break
+                }
+                //var temp = calculation
+                //for
+                print("ma")
+            case "=":
+                calculate()
             default:
-                displayText.append(button)
+                doubleAppend(button)
             }
         }
         
-        func calculate() {
-            guard !displayText.isEmpty else { return }
-            
-            if displayText.contains("²") {
-                //displayText.split(separator: "²").forEach { displayText.append($0) }
-            }
-            
-            let expression = NSExpression(format: displayText)
-            if let result = expression.expressionValue(with: nil, context: nil) as? Double {
-                displayText = String(result)
-                if displayText.hasSuffix(".0") {
-                    displayText.removeLast(2)
-                }
+        // Clean Append Helper
+        func doubleAppend(_ str: String) {
+            displayText.append(str)
+            calculation.append(str)
+        }
+        
+        // Helper Function
+        func updateStartingChar() {
+            if displayText.isEmpty {
+                startingChar = "0"
+                calculation = ""
             }
             else {
-                
+                startingChar = ""
             }
+        }
+        
+        // Calculation Helper
+        func calculate() {
+            guard !displayText.isEmpty else { return }
+            guard validateEquation() else { return }
+            
+            let expression = NSExpression(format: calculation)
+            if let result = expression.expressionValue(with: nil, context: nil) as? Double {
+                equation = displayText
+                displayText = String(result)
+                calculation = String(result)
+                if calculation.hasSuffix(".0") {
+                    displayText.removeLast(2)
+                    calculation.removeLast(2)
+                }
+            }
+            
+        }
+        
+        // Validation Helper
+        func validateEquation() -> Bool {
+            
+            if !usingParenthesis.isEmpty {
+                return false
+            }
+            
+            switch calculation.suffix(1) {
+            case "/", "*", "+", "-", "√", ".":
+                return false
+            default: break
+            }
+            
+            return true
         }
         
         
